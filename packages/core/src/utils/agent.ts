@@ -47,6 +47,11 @@ import { WalletSecret } from '../types/security'
 interface GetAgentModulesOptions {
   walletSecret: WalletSecret
   indyNetworks: IndyVdrPoolConfig[]
+  /**
+   * @deprecated No longer used. The legacy `mediationRecipient.mediatorInvitationUrl` option cannot
+   * handle Out-of-Band invitations, so mediation is now provisioned manually after agent
+   * initialization. Kept for backwards compatibility with existing callers.
+   */
   mediatorInvitationUrl?: string
   txnCache?: { capacity: number; expiryOffsetMs: number; path?: string }
 }
@@ -60,16 +65,10 @@ const mdocTrustedCertificate = Config.MDOC_TRUSTED_CERTIFICATE_BASE64
 /**
  * Constructs the modules to be used in the agent setup
  * @param indyNetworks
- * @param mediatorInvitationUrl determine which mediator to use
  * @param txnCache optional local cache config for indyvdr
  * @returns modules to be used in agent setup
  */
-export function getAgentModules({
-  walletSecret,
-  indyNetworks,
-  mediatorInvitationUrl,
-  txnCache,
-}: GetAgentModulesOptions) {
+export function getAgentModules({ walletSecret, indyNetworks, txnCache }: GetAgentModulesOptions) {
   const indyCredentialFormat = new LegacyIndyDidCommCredentialFormatService()
   const indyProofFormat = new LegacyIndyDidCommProofFormatService()
 
@@ -135,7 +134,10 @@ export function getAgentModules({
         ],
       },
       mediationRecipient: {
-        mediatorInvitationUrl: mediatorInvitationUrl,
+        // NOTE: `mediatorInvitationUrl` is deliberately not set. The legacy agent-config path does
+        // not support Out-of-Band invitations, which is what current mediators issue. Mediation is
+        // provisioned manually after `agent.initialize()`; see `startMediation` in
+        // `hooks/useBifoldAgentSetup.ts` and `docs/didcomm-mediator-credo.md`.
         mediatorPickupStrategy: DidCommMediatorPickupStrategy.Implicit,
       },
     }),

@@ -78,6 +78,54 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
     [logger, indyLedgers]
   )
 
+  /**
+   * Provisions mediation from an Out-of-Band invitation.
+   *
+   * The legacy `mediationRecipient.mediatorInvitationUrl` agent option only understands connection
+   * invitations, so it times out waiting for a mediation grant against mediators that issue OOB
+   * invitations. Provisioning manually after `initialize()` avoids that path. Reuses the existing
+   * mediator connection when one is already stored. See `docs/didcomm-mediator-credo.md`.
+   */
+  const startMediation = useCallback(
+    async (newAgent: Agent, mediatorUrl: string) => {
+      const didcomm = newAgent.modules.didcomm
+      logger.debug('Mediation: parsing invitation')
+      const invitation = await didcomm.oob.parseInvitation(mediatorUrl)
+      logger.debug(`Mediation: parsed invitation ${invitation.id}`)
+      const outOfBandRecord = await didcomm.oob.findByReceivedInvitationId(invitation.id)
+      logger.debug(`Mediation: existing oob record: ${outOfBandRecord?.id ?? 'none'}`)
+
+      let [connection] = outOfBandRecord ? await didcomm.connections.findAllByOutOfBandId(outOfBandRecord.id) : []
+
+      if (!connection) {
+        logger.debug('Mediation connection does not exist, creating connection')
+
+        const { connectionRecord } = await didcomm.oob.receiveInvitation(invitation, {
+          label: store.preferences.walletName,
+          autoAcceptInvitation: true,
+          autoAcceptConnection: true,
+        })
+
+        if (!connectionRecord) {
+          logger.error('No connection record to provision mediation.')
+          return
+        }
+
+        connection = connectionRecord
+      }
+
+      logger.debug(`Mediation: connection ${connection.id} state=${connection.state} isReady=${connection.isReady}`)
+
+      const readyConnection = connection.isReady
+        ? connection
+        : await didcomm.connections.returnWhenIsConnected(connection.id)
+
+      logger.debug('Mediation: connection ready, requesting mediation grant')
+      return didcomm.mediationRecipient.provision(readyConnection)
+    },
+    [logger, store.preferences.walletName]
+  )
+
   const migrateIfRequired = useCallback(
     async (newAgent: Agent, walletSecret: WalletSecret) => {
       // If we haven't migrated to Aries Askar yet, we need to do this before we initialize the agent.
@@ -142,6 +190,20 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
         throw e
       }
 
+      if (mediatorUrl) {
+        try {
+          logger.info('Provisioning mediation...')
+          await startMediation(newAgent, mediatorUrl)
+          await newAgent.modules.didcomm.mediationRecipient.initiateMessagePickup()
+        } catch (e: unknown) {
+          // A mediator that is unreachable or misbehaving must not prevent the wallet from opening.
+          // DIDComm messaging will be unavailable until mediation succeeds, but OpenID4VC flows and
+          // stored credentials remain usable.
+          logger.error(`Mediation provisioning failed, continuing without a mediator: ${e}`)
+          logger.error(`Mediation failure stack: ${(e as Error)?.stack ?? 'none'}`)
+        }
+      }
+
       logger.info('Creating link secret if required...')
       await createLinkSecretIfRequired(newAgent)
 
@@ -158,6 +220,7 @@ const useBifoldAgentSetup = (): AgentSetupReturnType => {
       restartExistingAgent,
       createNewAgent,
       migrateIfRequired,
+      startMediation,
       warmUpCache,
       store.preferences.selectedMediator,
       bridge,
