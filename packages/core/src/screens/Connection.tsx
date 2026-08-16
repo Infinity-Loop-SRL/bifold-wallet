@@ -419,11 +419,14 @@ const Connection: React.FC<ConnectionProps> = ({ navigation, route }) => {
       )
     }
 
-    if (state.shouldShowProofComponent) {
+    // `notificationRecord` can lag one render behind `shouldShowProofComponent`
+    // when several exchanges arrive in quick succession; guard so a missing
+    // record falls through to the loading state instead of crashing.
+    if (state.shouldShowProofComponent && (proofId || state.notificationRecord?.id)) {
       return <ProofRequest proofId={proofId ?? state.notificationRecord.id} navigation={navigation} />
     }
 
-    if (state.shouldShowOfferComponent) {
+    if (state.shouldShowOfferComponent && (credentialId || state.notificationRecord?.id)) {
       return <CredentialOffer credentialId={credentialId ?? state.notificationRecord.id} navigation={navigation} />
     }
   }

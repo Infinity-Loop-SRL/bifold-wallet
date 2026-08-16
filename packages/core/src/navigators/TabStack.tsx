@@ -98,9 +98,27 @@ const TabStack: React.FC = () => {
         return
       }
 
+      // acapy-vc-authn-oidc's same-device button links `<prefix>?_url=<base64>`,
+      // where the payload is the URL of the (shortened) proof-request
+      // invitation. Resolve it to that URL so the regular handling below can
+      // fetch the invitation from it.
+      let resolvedLink = deepLink
+      const b64Url = /[?&]_url=([A-Za-z0-9+/=_-]+)/.exec(deepLink)?.[1]
+      if (b64Url) {
+        try {
+          const decoded = Buffer.from(decodeURIComponent(b64Url), 'base64').toString('utf8')
+          if (/^https?:\/\//.test(decoded)) {
+            logger.info(`Deeplink carries base64 _url, resolving to: ${decoded}`)
+            resolvedLink = decoded
+          }
+        } catch (e) {
+          logger.warn(`Failed to decode _url deeplink parameter: ${e}`)
+        }
+      }
+
       try {
         await connectFromScanOrDeepLink(
-          deepLink,
+          resolvedLink,
           agent,
           logger,
           navigation,
