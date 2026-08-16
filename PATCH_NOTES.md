@@ -23,3 +23,22 @@ One patch to fix an edge with signed integers
 #### @sphereon-pex-npm-3.3.3-144d9252ec.patch and @animo-id-pex-npm-4.1.1-alpha.0-f20edfffa2.patch
 
 Fixes local-dev-only bug with yarn install (I don't know why an npm package wants to force pnpm usage, seems like they left this over from their local development)
+
+## RoDID pilot — fmt / Xcode 26 build patch
+
+Xcode 26's clang rejects the compile-time format-string checking in the `fmt`
+11.0.2 pod pinned by React Native 0.81 ("call to consteval function ... is not
+a constant expression"). After **every** `pod install` in `samples/app/ios`,
+force fmt's runtime-checked path before building:
+
+in `samples/app/ios/Pods/fmt/include/fmt/base.h`, at the top of the
+"Detect consteval" block (~line 114), insert:
+
+```c
+#if 1
+#  define FMT_USE_CONSTEVAL 0
+#elif !defined(__cpp_lib_is_constant_evaluated)
+```
+
+(replacing the original `#if !defined(__cpp_lib_is_constant_evaluated)` line).
+`FMT_USE_CONSTEVAL` is not `#ifndef`-guarded, so a `-D` flag cannot override it.
