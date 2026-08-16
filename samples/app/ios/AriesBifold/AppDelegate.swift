@@ -38,6 +38,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> UIInterfaceOrientationMask {
     return Orientation.getOrientation()
   }
+
+  // Deep links (rodid://, bcwallet://) — forward to React Native's Linking module;
+  // without this, custom-scheme URLs are silently dropped.
+  func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    return RCTLinkingManager.application(app, open: url, options: options)
+  }
+
+  func application(
+    _ application: UIApplication,
+    continue userActivity: NSUserActivity,
+    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+  ) -> Bool {
+    return RCTLinkingManager.application(
+      application,
+      continue: userActivity,
+      restorationHandler: restorationHandler
+    )
+  }
 }
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
