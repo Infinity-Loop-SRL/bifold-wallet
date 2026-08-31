@@ -1,5 +1,8 @@
-import { BifoldLogger, Container, TokenMapping } from '@bifold/core'
+import { BifoldLogger, Container, TOKENS, TokenMapping } from '@bifold/core'
 import { DependencyContainer } from 'tsyringe'
+
+import OnboardingPagesICI from './rodid/OnboardingPagesICI'
+import TermsICI, { TermsVersionICI } from './rodid/TermsICI'
 
 export class AppContainer implements Container {
   private _container: DependencyContainer
@@ -113,6 +116,10 @@ export class AppContainer implements Container {
     //   return response.data
       
     // })
+
+    // ── RoDID pilot branding: ICI Wallet content screens ──────────────────
+    this.container.registerInstance(TOKENS.SCREEN_ONBOARDING_PAGES, OnboardingPagesICI)
+    this.container.registerInstance(TOKENS.SCREEN_TERMS, { screen: TermsICI, version: TermsVersionICI })
 
     return this
   }
