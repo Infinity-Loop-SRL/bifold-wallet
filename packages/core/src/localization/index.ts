@@ -30,6 +30,7 @@ export enum Locales {
   en = 'en',
   fr = 'fr',
   ptBr = 'pt-BR',
+  ro = 'ro',
 }
 
 const currentLanguage = i18n.language

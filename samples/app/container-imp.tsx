@@ -1,4 +1,4 @@
-import { BifoldLogger, Container, TOKENS, TokenMapping } from '@bifold/core'
+import { BifoldLogger, Container, defaultConfig, Locales, TOKENS, TokenMapping } from '@bifold/core'
 import { DependencyContainer } from 'tsyringe'
 
 import OnboardingPagesICI from './rodid/OnboardingPagesICI'
@@ -118,6 +118,10 @@ export class AppContainer implements Container {
     // })
 
     // ── RoDID pilot branding: ICI Wallet content screens ──────────────────
+    this.container.registerInstance(TOKENS.CONFIG, {
+      ...defaultConfig,
+      supportedLanguages: [Locales.ro, Locales.en, Locales.fr, Locales.ptBr],
+    })
     this.container.registerInstance(TOKENS.SCREEN_ONBOARDING_PAGES, OnboardingPagesICI)
     this.container.registerInstance(TOKENS.SCREEN_TERMS, { screen: TermsICI, version: TermsVersionICI })
 

@@ -36,14 +36,20 @@ if (typeof global.Buffer === 'undefined') {
   global.Buffer = Buffer
 }
 
-import { initLanguages, translationResources, createApp, MainContainer } from '@bifold/core'
+import { i18n, initLanguages, translationResources, createApp, MainContainer } from '@bifold/core'
+
+import ro from './rodid/localization/ro.json'
 import { AppRegistry } from 'react-native'
 import { container } from 'tsyringe'
 
 import { name as appName } from './app.json'
 import { AppContainer } from './container-imp'
 
-initLanguages(translationResources)
+initLanguages({ ...translationResources, ro: { translation: ro } })
+// The pilot targets Romanian audiences: fresh installs start in Romanian.
+// initStoredLanguage() (run at app start) still applies whatever language the
+// user selects in Settings, so this only decides the first-launch default.
+i18n.changeLanguage('ro')
 const bifoldContainer = new MainContainer(container.createChildContainer()).init()
 const appContainer = new AppContainer(bifoldContainer).init()
 const App = createApp(appContainer)

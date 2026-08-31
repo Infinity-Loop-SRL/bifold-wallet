@@ -89,7 +89,7 @@ export { DispatchAction, reducer, default as Store } from './contexts/reducers/s
 export { defaultState, mergeReducers, StoreContext, StoreProvider, useStore } from './contexts/store'
 export { ThemeProvider, useTheme } from './contexts/theme'
 export { useDeepLinks } from './hooks/deep-links'
-export { initLanguages, initStoredLanguage, Locales, translationResources } from './localization'
+export { i18n, initLanguages, initStoredLanguage, Locales, translationResources } from './localization'
 export * from './navigators'
 export { createStyles } from './screens/OnboardingPages'
 export * from './services/storage'
