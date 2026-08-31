@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 150">
+  <defs>
+    <linearGradient id="iciBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B3FB5" />
+      <stop offset="1" stop-color="#1B2BB0" />
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="280" height="130" rx="26" fill="url(#iciBg)" />
+  <rect x="60" y="35" width="180" height="80" rx="14" fill="none" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="6" />
+  <rect x="76" y="52" width="64" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.30" />
+  <rect x="76" y="70" width="44" height="9" rx="4.5" fill="#FFFFFF" fill-opacity="0.22" />
+  <text
+    x="150"
+    y="98"
+    text-anchor="middle"
+    font-family="Helvetica"
+    font-size="62"
+    font-weight="bold"
+    fill="#FFFFFF"
+  >ICI</text>
+</svg>
