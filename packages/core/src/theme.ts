@@ -1313,14 +1313,14 @@ export const Assets = {
   },
   img: {
     logoPrimary: {
-      src: require('./assets/img/logo-large.png'),
+      src: require('./assets/img/logo-ici-large.png'),
       aspectRatio: 1,
       height: '33%',
       width: '33%',
       resizeMode: 'contain',
     },
     logoSecondary: {
-      src: require('./assets/img/logo-large.png'),
+      src: require('./assets/img/logo-ici-large.png'),
       aspectRatio: 1,
       height: 120,
       width: 120,
