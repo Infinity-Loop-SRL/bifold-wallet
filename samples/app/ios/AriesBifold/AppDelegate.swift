@@ -20,16 +20,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
+    self.launchOptions = launchOptions
 
-    window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "Aries-Bifold",
-      in: window,
-      launchOptions: launchOptions
-    )
-
+    // The window is created by SceneDelegate (UIScene lifecycle) — the iOS 27
+    // SDK traps apps that still create their window here.
     return true
+  }
+
+  var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+
+  func application(
+    _ application: UIApplication,
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let config = UISceneConfiguration(name: "Default", sessionRole: connectingSceneSession.role)
+    config.delegateClass = SceneDelegate.self
+    return config
   }
 
   func application(
@@ -73,5 +80,50 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
 #else
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
+  }
+}
+
+// UIScene lifecycle adoption (required by the iOS 27 SDK). React Native is
+// started once, into the first window scene; deep links and universal links
+// arrive here instead of on the AppDelegate.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene,
+          let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+          let factory = appDelegate.reactNativeFactory else { return }
+
+    let window = UIWindow(windowScene: windowScene)
+    self.window = window
+    appDelegate.window = window
+
+    factory.startReactNative(
+      withModuleName: "Aries-Bifold",
+      in: window,
+      launchOptions: appDelegate.launchOptions
+    )
+
+    // A deep link that launched the app arrives with the first scene connection.
+    if let url = connectionOptions.urlContexts.first?.url {
+      _ = RCTLinkingManager.application(UIApplication.shared, open: url, options: [:])
+    }
+    if let activity = connectionOptions.userActivities.first {
+      _ = RCTLinkingManager.application(UIApplication.shared, continue: activity) { _ in }
+    }
+  }
+
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    for ctx in URLContexts {
+      _ = RCTLinkingManager.application(UIApplication.shared, open: ctx.url, options: [:])
+    }
+  }
+
+  func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+    _ = RCTLinkingManager.application(UIApplication.shared, continue: userActivity) { _ in }
   }
 }

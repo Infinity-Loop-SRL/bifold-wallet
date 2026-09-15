@@ -71,5 +71,31 @@ target 'AriesBifold' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # RoDID pilot — Xcode 26/27 build fixes:
+    # 1. Xcode 27 refuses deployment targets below iOS 15; several pods still
+    #    declare 9.0–13.4. Lift them to the app's minimum.
+    installer.pods_project.targets.each do |t|
+      t.build_configurations.each do |c|
+        if c.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 15.1
+          c.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        end
+      end
+    end
+    # 2. fmt 11.0.2 consteval checks are rejected by Xcode 26+ clang (see
+    #    PATCH_NOTES.md). Force the runtime-checked path so it need not be
+    #    re-applied by hand after every pod install.
+    fmt_base = File.join(installer.sandbox.root, 'fmt/include/fmt/base.h')
+    if File.exist?(fmt_base)
+      src = File.read(fmt_base)
+      marker = '/* RoDID: FMT_USE_CONSTEVAL forced off */'
+      unless src.include?(marker)
+        src.sub!("#if !defined(__cpp_lib_is_constant_evaluated)\n#  define FMT_USE_CONSTEVAL 0",
+                 "#if 1 #{marker}\n#  define FMT_USE_CONSTEVAL 0\n#elif !defined(__cpp_lib_is_constant_evaluated)\n#  define FMT_USE_CONSTEVAL 0")
+        File.chmod(0644, fmt_base)  # CocoaPods leaves Pods/ read-only
+        File.write(fmt_base, src)
+        Pod::UI.puts 'RoDID: patched fmt/base.h (FMT_USE_CONSTEVAL 0)'.green
+      end
+    end
   end
 end

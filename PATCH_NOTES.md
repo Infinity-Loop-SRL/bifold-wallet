@@ -42,3 +42,24 @@ in `samples/app/ios/Pods/fmt/include/fmt/base.h`, at the top of the
 
 (replacing the original `#if !defined(__cpp_lib_is_constant_evaluated)` line).
 `FMT_USE_CONSTEVAL` is not `#ifndef`-guarded, so a `-D` flag cannot override it.
+
+## RoDID pilot — Xcode 27 / Ruby 4 build notes (2026-09-15)
+
+- **fmt patch is now automatic**: the Podfile `post_install` hook rewrites
+  `Pods/fmt/include/fmt/base.h` (`FMT_USE_CONSTEVAL 0`) on every `pod install`;
+  the manual step above is no longer needed.
+- **Deployment targets**: Xcode 27 refuses pods declaring iOS < 15. The same
+  hook lifts every pod's `IPHONEOS_DEPLOYMENT_TARGET` to 15.1.
+- **UIScene lifecycle**: the iOS 27 SDK traps (SIGTRAP in
+  `__UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption`) apps that
+  still create their window in `application(_:didFinishLaunchingWithOptions:)`.
+  `AppDelegate.swift` now keeps only the React Native factory; a `SceneDelegate`
+  (same file) creates the window, starts React Native and forwards deep links /
+  universal links. `Info.plist` carries the matching `UIApplicationSceneManifest`.
+- **Ruby 4 (Homebrew)**: `nkf`/`kconv` left the default gems, CocoaPods still
+  needs it — `gem 'nkf'` added to `samples/app/Gemfile`. CocoaPods also needs
+  `LANG=en_US.UTF-8`.
+- **`react-native run-ios`** aborts on this Xcode because `Simulator.app` is not
+  at the path the CLI expects. Build with `xcodebuild` and install with
+  `xcrun simctl install booted …/AriesBifold.app` instead; Metro is started
+  separately (`yarn start`).
